@@ -1,0 +1,13 @@
+{
+  "name": "rein-touch-sandbox",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node-gyp rebuild",
+    "start": "node test_bridge.js"
+  },
+  "dependencies": {
+    "node-addon-api": "^8.0.0"
+  }
+}

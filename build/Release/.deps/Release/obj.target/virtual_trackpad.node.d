@@ -1,0 +1,1 @@
+cmd_Release/obj.target/virtual_trackpad.node := g++ -o Release/obj.target/virtual_trackpad.node -shared -pthread -rdynamic -m64  -Wl,-soname=virtual_trackpad.node -Wl,--start-group Release/obj.target/virtual_trackpad/native/virtual_trackpad.o Release/obj.target/node_modules/node-addon-api/nothing.a -Wl,--end-group 
