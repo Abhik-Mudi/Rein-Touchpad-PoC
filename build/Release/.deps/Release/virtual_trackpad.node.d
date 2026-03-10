@@ -1,1 +1,0 @@
-cmd_Release/virtual_trackpad.node := ln -f "Release/obj.target/virtual_trackpad.node" "Release/virtual_trackpad.node" 2>/dev/null || (rm -rf "Release/virtual_trackpad.node" && cp -af "Release/obj.target/virtual_trackpad.node" "Release/virtual_trackpad.node")
