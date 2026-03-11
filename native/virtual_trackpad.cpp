@@ -199,6 +199,68 @@ void OS_SendMouse(int action, int val1, int val2) {
 
 void OS_DestroyDevice() {}
 
+
+// ==========================================
+// 🍎 MACOS IMPLEMENTATION (CoreGraphics)
+// ==========================================
+#elif __APPLE__
+#include <ApplicationServices/ApplicationServices.h>
+
+bool OS_InitDevice() {
+    return true; // CoreGraphics handles its own session initialization
+}
+
+// 1. THE TOUCH API (The macOS Trap)
+void OS_SendTouch(int slot, int tracking_id, int x, int y) {
+    // WARNING: macOS does NOT have a public user-space Touch API!
+    // We leave this empty because Apple strictly bans faking a trackpad 
+    // without a Kernel/System Extension.
+}
+
+// 2. THE MOUSE API (The Global Fallback)
+void OS_SendMouse(int action, int val1, int val2) {
+    // Create an event source
+    CGEventSourceRef source = CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
+
+    if (action == 0) { 
+        // MOVE: Calculate relative movement
+        CGEventRef getPos = CGEventCreate(NULL);
+        CGPoint currentPos = CGEventGetLocation(getPos);
+        CFRelease(getPos);
+
+        currentPos.x += val1; // Add dx
+        currentPos.y += val2; // Add dy
+
+        CGEventRef move = CGEventCreateMouseEvent(source, kCGEventMouseMoved, currentPos, kCGMouseButtonLeft);
+        CGEventPost(kCGHIDEventTap, move);
+        CFRelease(move);
+    } 
+    else if (action == 1) { 
+        // CLICK: Left Down or Left Up
+        CGEventRef getPos = CGEventCreate(NULL);
+        CGPoint currentPos = CGEventGetLocation(getPos);
+        CFRelease(getPos);
+
+        CGEventType type = (val1 == 1) ? kCGEventLeftMouseDown : kCGEventLeftMouseUp;
+        CGEventRef click = CGEventCreateMouseEvent(source, type, currentPos, kCGMouseButtonLeft);
+        CGEventPost(kCGHIDEventTap, click);
+        CFRelease(click);
+    } 
+    else if (action == 2) { 
+        // SCROLL: Line-based scrolling
+        // macOS handles scroll values differently than Windows (usually 1 or -1 lines)
+        int lines = (val1 > 0) ? 1 : -1; 
+        CGEventRef scroll = CGEventCreateScrollWheelEvent(source, kCGScrollEventUnitLine, 1, lines);
+        CGEventPost(kCGHIDEventTap, scroll);
+        CFRelease(scroll);
+    }
+
+    CFRelease(source);
+}
+
+void OS_Sync() {}
+void OS_DestroyDevice() {}
+
 #endif
 
 // ==========================================

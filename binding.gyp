@@ -9,9 +9,26 @@
       "dependencies": [
         "<!(node -p \"require('node-addon-api').gyp\")"
       ],
-      "defines": [ "NAPI_DISABLE_CPP_EXCEPTIONS" ],
       "cflags!": [ "-fno-exceptions" ],
-      "cflags_cc!": [ "-fno-exceptions" ]
+      "cflags_cc!": [ "-fno-exceptions" ],
+      "defines": [ "NAPI_DISABLE_CPP_EXCEPTIONS" ],
+      
+      "conditions": [
+        ["OS=='mac'", {
+          "xcode_settings": {
+            "OTHER_LDFLAGS": [
+              "-framework ApplicationServices"
+            ]
+          }
+        }],
+        ["OS=='win'", {
+          "msvs_settings": {
+            "VCCLCompilerTool": {
+              "ExceptionHandling": 1
+            }
+          }
+        }]
+      ]
     }
   ]
 }

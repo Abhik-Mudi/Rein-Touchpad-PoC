@@ -77,48 +77,77 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const virtualTrackpad = require('./build/Release/virtual_trackpad.node');
 
+// Let's detect the OS in JS just so we can log helpful messages!
+const isMac = process.platform === 'darwin';
+
 const isStarted = virtualTrackpad.initDevice();
 
 if (isStarted) {
-    console.log("Device Online! (Dual Touch + Mouse Architecture)");
-    console.log("Hover your physical mouse over the Windows Desktop or File Explorer...");
+    console.log(`🚀 God Mode Device Online! (Detected OS: ${process.platform})`);
+    console.log("⚠️ Hands off the mouse! Automated test starting in 3 seconds...");
     
     setTimeout(async () => {
         // ==========================================
-        // TEST 1: VIRTUAL MOUSE (Relative Movement)
+        // TEST 1: VIRTUAL MOUSE (Move) - WORKS ON ALL OS
         // ==========================================
-        console.log("[TEST 1] Moving the cursor diagonally...");
+        console.log("👉 [TEST 1] Moving the cursor diagonally...");
         for (let i = 0; i < 40; i++) {
             await new Promise(r => setTimeout(r, 10)); 
-            // sendMouse(action, val1, val2)
-            // action 0 = Move. Moving +5 pixels X (Right) and +5 pixels Y (Down)
+            // sendMouse(action, val1, val2) -> action 0 is Move
             virtualTrackpad.sendMouse(0, 5, 5); 
         }
         
         // ==========================================
-        // TEST 2: VIRTUAL MOUSE (Legacy Scroll)
+        // TEST 2: VIRTUAL MOUSE (Click) - WORKS ON ALL OS
         // ==========================================
-        console.log("[TEST 2] Scrolling the page...");
-        for(let i = 0; i < 5; i++) {
-             await new Promise(r => setTimeout(r, 100)); 
-             // action 2 = Scroll. val1 = -120 (One standard scroll wheel tick down)
-             virtualTrackpad.sendMouse(2, -120, 0);
+        console.log("👆 [TEST 2] Executing Left Click...");
+        // action 1 is Click. val1 = 1 (Down), val1 = 0 (Up)
+        virtualTrackpad.sendMouse(1, 1, 0); // Mouse Down
+        await new Promise(r => setTimeout(r, 50)); // Hold for 50ms
+        virtualTrackpad.sendMouse(1, 0, 0); // Mouse Up
+
+        await new Promise(r => setTimeout(r, 500)); // Pause
+
+        // ==========================================
+        // TEST 3: VIRTUAL MOUSE (Scroll) - WORKS ON ALL OS
+        // ==========================================
+        console.log("📜 [TEST 3] Scrolling the page down...");
+        for(let i = 0; i < 10; i++) {
+             await new Promise(r => setTimeout(r, 50)); 
+             // action 2 is Scroll. 
+             // Windows uses -120 for down. macOS C++ block converts any negative number to -1 line.
+             virtualTrackpad.sendMouse(2, -120, 0); 
         }
 
         // ==========================================
-        // TEST 3: VIRTUAL TOUCHSCREEN (Absolute Tap)
+        // TEST 4: VIRTUAL TOUCHSCREEN - OS DEPENDENT
         // ==========================================
-        console.log("[TEST 3] Tapping screen at exact coordinates (500, 500)...");
-        // sendTouch(slot, tracking_id, x, y)
-        virtualTrackpad.sendTouch(0, 100, 500, 500); // Finger touches glass
-        virtualTrackpad.sync();
-        
-        await new Promise(r => setTimeout(r, 50)); // Hold for 50ms
-        
-        virtualTrackpad.sendTouch(0, -1, 500, 500);  // Finger lifts off
-        virtualTrackpad.sync();
+        if (isMac) {
+            console.log("🛑 [TEST 4] Skipping Touchscreen tests. macOS blocks user-space touch APIs.");
+        } else {
+            console.log("🔍 [TEST 4] Executing Pinch-to-Zoom (Windows/Linux only)...");
+            let f1_x = 450, f1_y = 500; 
+            let f2_x = 550, f2_y = 500; 
 
-        console.log("All commands executed");
+            virtualTrackpad.sendTouch(0, 100, f1_x, f1_y);
+            virtualTrackpad.sendTouch(1, 101, f2_x, f2_y);
+            virtualTrackpad.sync();
+
+            for (let i = 0; i < 30; i++) {
+                await new Promise(r => setTimeout(r, 15)); 
+                f1_x -= 5; 
+                f2_x += 5; 
+                virtualTrackpad.sendTouch(0, 100, f1_x, f1_y);
+                virtualTrackpad.sendTouch(1, 101, f2_x, f2_y);
+                virtualTrackpad.sync();
+            }
+
+            virtualTrackpad.sendTouch(0, -1, f1_x, f1_y);
+            virtualTrackpad.sendTouch(1, -1, f2_x, f2_y);
+            virtualTrackpad.sync();
+        }
+
+        console.log("✅ Universal test sequence complete!");
         setTimeout(() => virtualTrackpad.destroyDevice(), 100);
         
     }, 3000);
