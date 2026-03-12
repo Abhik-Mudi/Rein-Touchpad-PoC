@@ -41,6 +41,9 @@ bool OS_InitDevice() {
     ioctl(uinput_fd, UI_SET_KEYBIT, BTN_RIGHT);
     ioctl(uinput_fd, UI_SET_KEYBIT, BTN_TOUCH);
     ioctl(uinput_fd, UI_SET_KEYBIT, BTN_TOOL_FINGER);
+    
+    // ✅ ADDED THIS: Tells Linux we are allowed to use Double-Tap (0x14d)
+    ioctl(uinput_fd, UI_SET_KEYBIT, 0x14d); 
 
     // Enable Absolute Multi-Touch (For sendTouch)
     ioctl(uinput_fd, UI_SET_EVBIT, EV_ABS);
@@ -94,15 +97,19 @@ void OS_SendTouch(int slot, int tracking_id, int x, int y) {
 
 void OS_SendMouse(int action, int val1, int val2) {
     if (uinput_fd < 0) return;
-    if (action == 0) { // Move (val1 = dx, val2 = dy)
+    if (action == 0) { 
         emit(uinput_fd, EV_REL, REL_X, val1);
         emit(uinput_fd, EV_REL, REL_Y, val2);
-    } else if (action == 1) { // Click (val1 = 1 down, 0 up)
+    } else if (action == 1) { 
         emit(uinput_fd, EV_KEY, BTN_LEFT, val1);
-    } else if (action == 2) { // Scroll (val1 = wheel clicks)
+    } else if (action == 2) { 
         emit(uinput_fd, EV_REL, REL_WHEEL, val1);
     }
     emit(uinput_fd, EV_SYN, SYN_REPORT, 0); 
+}
+
+void OS_EmitEvent(int type, int code, int val) {
+    if (uinput_fd >= 0) emit(uinput_fd, type, code, val);
 }
 
 void OS_Sync() {
@@ -298,10 +305,19 @@ Napi::Value DestroyDeviceWrapper(const Napi::CallbackInfo& info) {
     return Napi::Boolean::New(info.Env(), true);
 }
 
+Napi::Value EmitEventWrapper(const Napi::CallbackInfo& info) {
+    int type = info[0].As<Napi::Number>().Int32Value();
+    int code = info[1].As<Napi::Number>().Int32Value();
+    int val = info[2].As<Napi::Number>().Int32Value();
+    OS_EmitEvent(type, code, val); 
+    return Napi::Boolean::New(info.Env(), true);
+}
+
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
     exports.Set("initDevice", Napi::Function::New(env, InitDeviceWrapper));
     exports.Set("sendTouch", Napi::Function::New(env, SendTouchWrapper));
     exports.Set("sendMouse", Napi::Function::New(env, SendMouseWrapper)); // God mode unlocked
+    exports.Set("emitEvent", Napi::Function::New(env, EmitEventWrapper));
     exports.Set("sync", Napi::Function::New(env, SyncWrapper));
     exports.Set("destroyDevice", Napi::Function::New(env, DestroyDeviceWrapper));
     return exports;
