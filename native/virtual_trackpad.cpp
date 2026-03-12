@@ -1,7 +1,7 @@
 #include <napi.h>
 
 // ==========================================
-// 🐧 LINUX IMPLEMENTATION (uinput Trackpad + Mouse)
+// LINUX IMPLEMENTATION (uinput Trackpad + Mouse)
 // ==========================================
 #ifdef __linux__
 #include <linux/uinput.h>
@@ -125,7 +125,7 @@ void OS_DestroyDevice() {
 }
 
 // ==========================================
-// 🪟 WINDOWS IMPLEMENTATION (Hybrid Touch + Mouse)
+// WINDOWS IMPLEMENTATION (Hybrid Touch + Mouse)
 // ==========================================
 #elif _WIN32
 #include <windows.h>
@@ -208,7 +208,7 @@ void OS_DestroyDevice() {}
 
 
 // ==========================================
-// 🍎 MACOS IMPLEMENTATION (CoreGraphics)
+// MACOS IMPLEMENTATION (CoreGraphics)
 // ==========================================
 #elif __APPLE__
 #include <ApplicationServices/ApplicationServices.h>
@@ -271,7 +271,7 @@ void OS_DestroyDevice() {}
 #endif
 
 // ==========================================
-// 🌉 THE JAVASCRIPT BRIDGE (Runs on ALL OSes)
+// THE JAVASCRIPT BRIDGE (Runs on ALL OSes)
 // ==========================================
 Napi::Value InitDeviceWrapper(const Napi::CallbackInfo& info) {
     return Napi::Boolean::New(info.Env(), OS_InitDevice());
@@ -305,6 +305,7 @@ Napi::Value DestroyDeviceWrapper(const Napi::CallbackInfo& info) {
     return Napi::Boolean::New(info.Env(), true);
 }
 
+#ifdef __linux__
 Napi::Value EmitEventWrapper(const Napi::CallbackInfo& info) {
     int type = info[0].As<Napi::Number>().Int32Value();
     int code = info[1].As<Napi::Number>().Int32Value();
@@ -312,12 +313,15 @@ Napi::Value EmitEventWrapper(const Napi::CallbackInfo& info) {
     OS_EmitEvent(type, code, val); 
     return Napi::Boolean::New(info.Env(), true);
 }
+#endif
 
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
+    #ifdef __linux__
+    exports.Set("emitEvent", Napi::Function::New(env, EmitEventWrapper));
+    #endif
     exports.Set("initDevice", Napi::Function::New(env, InitDeviceWrapper));
     exports.Set("sendTouch", Napi::Function::New(env, SendTouchWrapper));
-    exports.Set("sendMouse", Napi::Function::New(env, SendMouseWrapper)); // God mode unlocked
-    exports.Set("emitEvent", Napi::Function::New(env, EmitEventWrapper));
+    exports.Set("sendMouse", Napi::Function::New(env, SendMouseWrapper));
     exports.Set("sync", Napi::Function::New(env, SyncWrapper));
     exports.Set("destroyDevice", Napi::Function::New(env, DestroyDeviceWrapper));
     return exports;
