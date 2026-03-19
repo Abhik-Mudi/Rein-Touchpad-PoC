@@ -13,9 +13,9 @@ if (isStarted) {
     
     setTimeout(async () => {
         
-        // ==========================================
+
         // LINUX WAYLAND EXECUTION (Raw emitEvent)
-        // ==========================================
+
         if (isLinux) {
             console.log("Running Linux-specific Wayland sequence...");
 
@@ -81,9 +81,9 @@ if (isStarted) {
             console.log("Linux Multi-Touch Scroll Executed!");
         }
 
-        // ==========================================
+
         // MAC EXECUTION (sendMouse)
-        // ==========================================
+
         else if(isMac) {
             console.log("Running Mac Mouse/Touch sequence...");
             
@@ -108,9 +108,9 @@ if (isStarted) {
             console.log("[TEST 4] Skipping Touchscreen tests on Mac.");
         }
 
-        // ==========================================
+
         // WINDOWS EXECUTION (sendMouse/SendTouch)
-        // ==========================================
+
         else {
             console.log("Running Windows Hybrid sequence...");
             
