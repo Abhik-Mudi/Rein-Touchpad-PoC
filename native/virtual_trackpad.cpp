@@ -1,8 +1,8 @@
 #include <napi.h>
 
-// ==========================================
+
 // LINUX IMPLEMENTATION (uinput Trackpad + Mouse)
-// ==========================================
+
 #ifdef __linux__
 #include <linux/uinput.h>
 #include <fcntl.h>
@@ -42,7 +42,7 @@ bool OS_InitDevice() {
     ioctl(uinput_fd, UI_SET_KEYBIT, BTN_TOUCH);
     ioctl(uinput_fd, UI_SET_KEYBIT, BTN_TOOL_FINGER);
     
-    // ✅ ADDED THIS: Tells Linux we are allowed to use Double-Tap (0x14d)
+    // Tells Linux we are allowed to use Double-Tap (0x14d)
     ioctl(uinput_fd, UI_SET_KEYBIT, 0x14d); 
 
     // Enable Absolute Multi-Touch (For sendTouch)
@@ -124,9 +124,9 @@ void OS_DestroyDevice() {
     }
 }
 
-// ==========================================
+
 // WINDOWS IMPLEMENTATION (Hybrid Touch + Mouse)
-// ==========================================
+
 #elif _WIN32
 #include <windows.h>
 #include <iostream>
@@ -207,9 +207,9 @@ void OS_SendMouse(int action, int val1, int val2) {
 void OS_DestroyDevice() {}
 
 
-// ==========================================
+
 // MACOS IMPLEMENTATION (CoreGraphics)
-// ==========================================
+
 #elif __APPLE__
 #include <ApplicationServices/ApplicationServices.h>
 
@@ -270,9 +270,9 @@ void OS_DestroyDevice() {}
 
 #endif
 
-// ==========================================
+
 // THE JAVASCRIPT BRIDGE (Runs on ALL OSes)
-// ==========================================
+
 Napi::Value InitDeviceWrapper(const Napi::CallbackInfo& info) {
     return Napi::Boolean::New(info.Env(), OS_InitDevice());
 }
