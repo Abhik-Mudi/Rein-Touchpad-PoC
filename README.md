@@ -5,20 +5,22 @@ A cross-platform virtual touchpad and input device emulator for Node.js. This na
 ## Features
 
 - **Cross-Platform Support**
-  - 🐧 **Linux**: uinput-based virtual input device with multi-touch support
+  - 🐧 **Linux**: Dual backend support with uinput and libevdev
+    - `test_linux.js`: libevdev-based backend (sendMouse method)
+    - `test_bridge.js`: raw uinput backend with multi-touch and raw event support
   - 🍎 **macOS**: Native mouse and touch event simulation
   - 🪟 **Windows**: Touch Injection API with hybrid touch and mouse support
 
-- **Multi-Touch Support**: Simulate multiple simultaneous touch points up to 2 fingers
+- **Multi-Touch Support**: Simulate multiple simultaneous touch points up to 2 fingers (uinput backend)
 - **Mouse Control**: Move cursor, click, and scroll programmatically
-- **Raw Input Events**: Direct access to input event codes for advanced use cases
+- **Raw Input Events**: Direct access to input event codes for advanced use cases (uinput backend)
 - **Absolute Positioning**: Precise control over touch coordinates
 
 ## Prerequisites
 
 ### Linux
-- `libuinput-dev` package (for uinput support)
-- Kernel support for uinput module
+- For uinput backend: `libuinput-dev` package and kernel support for uinput module
+- For libevdev backend: `libevdev-dev` package
 
 ### macOS
 - Xcode Command Line Tools
@@ -44,8 +46,23 @@ A cross-platform virtual touchpad and input device emulator for Node.js. This na
 
 ## Usage
 
-### Basic Setup
+### Linux Backend Selection
 
+**libevdev Backend** (Recommended for simpler use cases):
+```javascript
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+const virtualTrackpad = require('./build/Release/linux_libevdev.node');
+
+// Initialize the virtual input device
+const isStarted = virtualTrackpad.initDevice();
+
+if (isStarted) {
+    console.log('Device initialized successfully!');
+}
+```
+
+**uinput Backend** (Full-featured with raw events):
 ```javascript
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
@@ -71,7 +88,7 @@ const success = virtualTrackpad.initDevice();
 ```
 
 #### `sendMouse(action, val1, val2)`
-Sends mouse events (movement, clicks, scroll).
+Sends mouse events (movement, clicks, scroll). Available on all platforms and all Linux backends.
 
 **Parameters**:
 - `action` (integer):
@@ -98,7 +115,7 @@ virtualTrackpad.sendMouse(2, 5, 0); // Scroll down
 ```
 
 #### `emitEvent(type, code, value)`
-Sends raw input events (Linux/Windows).
+Sends raw input events. **Available only in the uinput backend on Linux**.
 
 **Parameters**:
 - `type` (integer): Event type (e.g., `EV_KEY`, `EV_ABS`, `EV_SYN`)
@@ -163,12 +180,15 @@ virtualTrackpad.sync();
 ```
 ├── binding.gyp              # node-gyp configuration
 ├── package.json             # Project metadata and scripts
-├── test_bridge.js           # Example usage and test suite
+├── test_bridge.js           # Test suite for uinput backend
+├── test_linux.js            # Test suite for libevdev backend
 ├── native/
-│   └── virtual_trackpad.cpp # Native C++ implementation
+│   ├── virtual_trackpad.cpp # Native C++ implementation (uinput)
+│   └── linux_libevdev.cpp   # Native C++ implementation (libevdev)
 └── build/                   # Compiled output
     ├── Release/
-    │   └── virtual_trackpad.node  # Compiled native module
+    │   ├── virtual_trackpad.node  # Compiled uinput module
+    │   └── linux_libevdev.node    # Compiled libevdev module
     └── binding.sln          # Visual Studio solution (Windows)
 ```
 
@@ -191,12 +211,25 @@ node test_bridge.js
 ## Platform-Specific Notes
 
 ### Linux
-- Requires `/dev/uinput` access. May need elevated permissions:
-  ```bash
-  sudo node test_bridge.js
-  ```
-- Virtual device appears as "Rein Input" in input device listing
-- Supports both uinput keyboard/mouse and multi-touch events
+- **uinput backend** (`test_bridge.js`):
+  - Requires `/dev/uinput` access. May need elevated permissions:
+    ```bash
+    sudo node test_bridge.js
+    ```
+
+- **libevdev backend** (`test_linux.js`):
+  - Simpler implementation with `sendMouse` support
+  - May need elevated permissions:
+    ```bash
+    sudo node test_linux.js
+    ```
+
+- **Important:** If you installed Node.js via NVM, a standard `sudo node` command will fail because the root user cannot see your local Node path. Use the following command to run the tests:
+    ```bash
+    sudo $(which node) test_linux.js
+    # or
+    sudo $(which node) test_bridge.js 
+    ```
 
 ### macOS
 - Uses native `ApplicationServices` framework
