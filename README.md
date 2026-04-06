@@ -32,12 +32,33 @@ A cross-platform virtual touchpad and input device emulator for Node.js. This na
 
 ## Installation
 
-1. **Install dependencies**:
+1. **Download Prerequisites**:
+
+   **Linux** (Ubuntu/Debian):
+   ```bash
+   sudo apt-get update
+   sudo apt-get install -y libuinput-dev libevdev-dev python3 build-essential
+   ```
+
+   **Linux** (Fedora/RHEL):
+   ```bash
+   sudo dnf install -y libuinput-devel libevdev-devel python3 gcc-c++
+   ```
+
+   **macOS**:
+   ```bash
+   xcode-select --install
+   ```
+
+   **Windows**:
+   Download and install [Visual Studio Build Tools](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022)
+
+2. **Install dependencies**:
    ```bash
    npm install
    ```
 
-2. **Build the native module**:
+3. **Build the native module**:
    ```bash
    npm run build
    ```
